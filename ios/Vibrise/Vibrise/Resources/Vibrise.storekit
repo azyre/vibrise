@@ -1,0 +1,33 @@
+{
+  "identifier" : "4F7A9C21",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "C0FFEE01",
+      "localizations" : [
+        {
+          "description" : "Support Vibrise development with a coffee tip.",
+          "displayName" : "Coffee Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.azyre.vibrise.tip.coffee",
+      "referenceName" : "Coffee Tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}

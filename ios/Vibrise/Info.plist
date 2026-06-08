@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Vibrise uses system alarm access so your alarms can ring reliably even when the phone is locked.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Vibrise uses your location to match alarms with local weather.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Vibrise saves your share images to your photo library.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>NSUserActivityTypeLiveActivity</string>
+	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>MavenPro-Regular.ttf</string>
+		<string>Satoshi-Variable.ttf</string>
+	</array>
+</dict>
+</plist>
