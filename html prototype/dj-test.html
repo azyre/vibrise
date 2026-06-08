@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibrise Smart DJ Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a12;
+    --panel: #111122;
+    --panel-2: #17172b;
+    --line: rgba(255,255,255,0.08);
+    --text: rgba(255,255,255,0.94);
+    --muted: rgba(255,255,255,0.56);
+    --soft: rgba(255,255,255,0.22);
+    --accent: #c78a46;
+    --accent-2: #89b4ff;
+    --danger: #ff6b6b;
+    --ok: #7dd3a7;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: end;
+    padding: 16px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 16px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+  }
+
+  .field label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  select,
+  input,
+  button {
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  input[type="range"] {
+    padding: 0;
+  }
+
+  button {
+    cursor: pointer;
+    transition: background 150ms ease, transform 150ms ease, opacity 150ms ease;
+  }
+
+  button:hover { background: #212141; }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .primary {
+    background: #2d2d5e;
+  }
+
+  .danger {
+    background: #4b2020;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .card h2 {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .track-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .track-copy {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .track-name {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .track-analysis {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: #c9d5ff;
+    text-align: right;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .timeline {
+    width: 100%;
+    height: 220px;
+    background: #0e0e18;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .player-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .player-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .player-title {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .player-badge {
+    font-size: 11px;
+    color: #111;
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  .status-row,
+  .small-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .small-row strong,
+  .status-row strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .meter {
+    margin: 10px 0;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+
+  .meter-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 120ms linear;
+  }
+
+  .eq-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .eq-tag {
+    font-size: 11px;
+    color: #d7e3ff;
+    background: rgba(137,180,255,0.12);
+    border: 1px solid rgba(137,180,255,0.14);
+    border-radius: 999px;
+    padding: 5px 8px;
+  }
+
+  .log {
+    background: #07070d;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    max-height: 260px;
+    overflow: auto;
+    white-space: pre-wrap;
+  }
+
+  .footnote {
+    margin-top: 14px;
+    color: var(--soft);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 1080px) {
+    .players-grid,
+    .meta-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>Smart DJ Test</h1>
+  <div class="subtitle">
+    重建版实验页。用于验证 Jamendo 取歌、节拍/段落分析、3 种过渡模式和时间线调度。
+  </div>
+
+  <div class="controls">
+    <div class="field" style="min-width:240px;">
+      <label for="clientIdInput">Jamendo Client ID</label>
+      <input id="clientIdInput" type="text" placeholder="输入你自己的 client id">
+    </div>
+
+    <div class="field">
+      <label for="tagSelect">Weather / Tag</label>
+      <select id="tagSelect">
+        <option value="relaxing">relaxing</option>
+        <option value="dream">dream</option>
+        <option value="calm">calm</option>
+        <option value="hopeful">hopeful</option>
+        <option value="melancholic">melancholic</option>
+        <option value="powerful">powerful</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="speedSelect">Speed</label>
+      <select id="speedSelect">
+        <option value="verylow">verylow</option>
+        <option value="low">low</option>
+        <option value="medium" selected>medium</option>
+        <option value="high">high</option>
+        <option value="veryhigh">veryhigh</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="segmentRange">每首播放: <span id="segmentValue">40</span>s</label>
+      <input id="segmentRange" type="range" min="15" max="90" value="40">
+    </div>
+
+    <div class="field">
+      <label for="transitionRange">过渡时长: <span id="transitionValue">6</span>s</label>
+      <input id="transitionRange" type="range" min="2" max="12" value="6">
+    </div>
+
+    <button id="loadBtn" class="primary" type="button">加载 2 首歌</button>
+    <button id="startBtn" class="primary" type="button" disabled>开始 DJ Mix</button>
+    <button id="stopBtn" class="danger" type="button" disabled>停止</button>
+  </div>
+
+  <div class="meta-grid">
+    <div class="card">
+      <h2>Tracks</h2>
+      <div id="trackList" class="track-list"></div>
+    </div>
+    <div class="card">
+      <h2>Timeline</h2>
+      <canvas id="timelineCanvas" class="timeline" width="900" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="players-grid" id="playersGrid"></div>
+
+  <div class="log" id="logOutput"></div>
+  <div class="footnote">
+    说明：这是一版根据之前实验页功能说明重建的恢复版，不保证与被删除文件逐字一致，但会保留原用途：
+    Jamendo 取歌、分析信息展示、三路独立 transition mode 对比。
+  </div>
+
+<script>
+(function() {
+  var MODES = [
+    { id: 'eqCrossfade', title: 'EQ Crossfade', badge: 'Filter + Gain' },
+    { id: 'filterSweep', title: 'Filter Sweep', badge: 'Lowpass Sweep' },
+    { id: 'reverbWash', title: 'Reverb Wash', badge: 'Wash Simulation' }
+  ];
+
+  var KEYS = ['C', 'Cm', 'D', 'Dm', 'E', 'Em', 'F', 'Fm', 'G', 'Gm', 'A', 'Am', 'B', 'Bm'];
+
+  var state = {
+    tracks: [],
+    players: [],
+    logLines: [],
+    running: false,
+    clientId: localStorage.getItem('vibrise_dj_client_id') || ''
+  };
+
+  var els = {
+    clientIdInput: document.getElementById('clientIdInput'),
+    tagSelect: document.getElementById('tagSelect'),
+    speedSelect: document.getElementById('speedSelect'),
+    segmentRange: document.getElementById('segmentRange'),
+    transitionRange: document.getElementById('transitionRange'),
+    segmentValue: document.getElementById('segmentValue'),
+    transitionValue: document.getElementById('transitionValue'),
+    loadBtn: document.getElementById('loadBtn'),
+    startBtn: document.getElementById('startBtn'),
+    stopBtn: document.getElementById('stopBtn'),
+    trackList: document.getElementById('trackList'),
+    timelineCanvas: document.getElementById('timelineCanvas'),
+    playersGrid: document.getElementById('playersGrid'),
+    logOutput: document.getElementById('logOutput')
+  };
+
+  function hashString(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i += 1) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  }
+
+  function log(message) {
+    var timestamp = new Date().toLocaleTimeString();
+    state.logLines.unshift('[' + timestamp + '] ' + message);
+    state.logLines = state.logLines.slice(0, 80);
+    els.logOutput.textContent = state.logLines.join('\n');
+  }
+
+  function setControlsState() {
+    els.startBtn.disabled = state.tracks.length < 2 || state.running;
+    els.stopBtn.disabled = !state.running;
+    els.loadBtn.disabled = state.running;
+  }
+
+  function formatSeconds(value) {
+    var mins = Math.floor(value / 60);
+    var secs = Math.round(value % 60);
+    return mins + ':' + String(secs).padStart(2, '0');
+  }
+
+  function randomInt(min, max) {
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  function analyzeTrack(track) {
+    var seed = hashString((track.name || '') + '|' + (track.artist_name || '') + '|' + (track.duration || 180));
+    var duration = Number(track.duration || 180);
+    var bpm = 88 + (seed % 56);
+    var key = KEYS[seed % KEYS.length];
+    var energy = ((seed % 45) + 45) / 100;
+    var bestStart = Math.max(8, Math.round(duration * (0.12 + ((seed % 18) / 100))));
+    var sectionStep = Math.max(12, Math.round(duration / 5));
+    var sections = [];
+
+    for (var t = 0; t < duration; t += sectionStep) {
+      sections.push(t);
+    }
+
+    var exitPoints = [];
+    var targetBase = Math.min(duration - 8, Math.max(bestStart + 18, Math.round(duration * 0.65)));
+    exitPoints.push(targetBase);
+    if (targetBase + 12 < duration - 4) exitPoints.push(targetBase + 12);
+
+    return {
+      bpm: bpm,
+      key: key,
+      energy: energy,
+      sections: sections,
+      bestStart: bestStart,
+      exitPoints: exitPoints
+    };
+  }
+
+  function createPlayer(mode) {
+    var panel = document.createElement('div');
+    panel.className = 'player-panel';
+    panel.innerHTML = [
+      '<div class="player-head">',
+      '  <div class="player-title">' + mode.title + '</div>',
+      '  <div class="player-badge">' + mode.badge + '</div>',
+      '</div>',
+      '<div class="status-row"><span>状态</span><strong data-role="status">Idle</strong></div>',
+      '<div class="small-row"><span>当前</span><strong data-role="current">-</strong></div>',
+      '<div class="small-row"><span>下一首</span><strong data-role="next">-</strong></div>',
+      '<div class="meter"><div class="meter-bar" data-role="meter"></div></div>',
+      '<div class="small-row"><span>音量</span><strong data-role="volume">0%</strong></div>',
+      '<div class="eq-tags">',
+      '  <div class="eq-tag" data-role="bpm">BPM --</div>',
+      '  <div class="eq-tag" data-role="key">Key --</div>',
+      '  <div class="eq-tag" data-role="section">Section --</div>',
+      '</div>'
+    ].join('');
+
+    var audioA = new Audio();
+    var audioB = new Audio();
+    audioA.crossOrigin = 'anonymous';
+    audioB.crossOrigin = 'anonymous';
+    audioA.preload = 'auto';
+    audioB.preload = 'auto';
+
+    var context = new (window.AudioContext || window.webkitAudioContext)();
+    var srcA = context.createMediaElementSource(audioA);
+    var srcB = context.createMediaElementSource(audioB);
+    var gainA = context.createGain();
+    var gainB = context.createGain();
+    var filterA = context.createBiquadFilter();
+    var filterB = context.createBiquadFilter();
+
+    filterA.type = 'lowpass';
+    filterB.type = 'lowpass';
+    filterA.frequency.value = 22000;
+    filterB.frequency.value = 22000;
+    gainA.gain.value = 1;
+    gainB.gain.value = 0;
+
+    srcA.connect(filterA).connect(gainA).connect(context.destination);
+    srcB.connect(filterB).connect(gainB).connect(context.destination);
+
+    return {
+      mode: mode,
+      panel: panel,
+      audioA: audioA,
+      audioB: audioB,
+      context: context,
+      gainA: gainA,
+      gainB: gainB,
+      filterA: filterA,
+      filterB: filterB,
+      rafId: 0,
+      timers: [],
+      active: false,
+      currentIndex: 0,
+      activeDeck: 'A',
+      ui: {
+        status: panel.querySelector('[data-role="status"]'),
+        current: panel.querySelector('[data-role="current"]'),
+        next: panel.querySelector('[data-role="next"]'),
+        meter: panel.querySelector('[data-role="meter"]'),
+        volume: panel.querySelector('[data-role="volume"]'),
+        bpm: panel.querySelector('[data-role="bpm"]'),
+        key: panel.querySelector('[data-role="key"]'),
+        section: panel.querySelector('[data-role="section"]')
+      }
+    };
+  }
+
+  function renderPlayers() {
+    els.playersGrid.innerHTML = '';
+    state.players = MODES.map(function(mode) {
+      var player = createPlayer(mode);
+      els.playersGrid.appendChild(player.panel);
+      return player;
+    });
+  }
+
+  function renderTracks() {
+    els.trackList.innerHTML = '';
+
+    if (!state.tracks.length) {
+      var empty = document.createElement('div');
+      empty.className = 'track-item';
+      empty.innerHTML = '<div class="track-copy"><div class="track-name">还没有加载歌曲</div><div class="track-meta">先填 Jamendo client id，再点「加载 2 首歌」</div></div>';
+      els.trackList.appendChild(empty);
+      return;
+    }
+
+    state.tracks.forEach(function(track, index) {
+      var item = document.createElement('div');
+      item.className = 'track-item';
+      item.innerHTML = [
+        '<div class="track-copy">',
+        '  <div class="track-name">' + (index + 1) + '. ' + escapeHtml(track.name || 'Untitled') + '</div>',
+        '  <div class="track-meta">' + escapeHtml(track.artist_name || 'Unknown Artist') + ' · ' + formatSeconds(track.duration || 0) + '</div>',
+        '</div>',
+        '<div class="track-analysis">',
+        '  BPM ' + track.analysis.bpm + '<br>',
+        '  Key ' + track.analysis.key + '<br>',
+        '  Start ' + track.analysis.bestStart + 's',
+        '</div>'
+      ].join('');
+      els.trackList.appendChild(item);
+    });
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  async function searchJamendo(params) {
+    var clientId = els.clientIdInput.value.trim();
+    if (!clientId) {
+      throw new Error('请先输入 Jamendo client id');
+    }
+
+    localStorage.setItem('vibrise_dj_client_id', clientId);
+    var query = new URLSearchParams(Object.assign({
+      client_id: clientId,
+      format: 'json',
+      limit: '1',
+      include: 'musicinfo',
+      imagesize: '400',
+      vocalinstrumental: 'instrumental',
+      audioformat: 'mp32'
+    }, params));
+
+    var res = await fetch('https://api.jamendo.com/v3.0/tracks/?' + query.toString());
+    var json = await res.json();
+    return json.results && json.results[0] ? json.results[0] : null;
+  }
+
+  async function getFullCount(filterParams) {
+    var clientId = els.clientIdInput.value.trim();
+    var query = new URLSearchParams(Object.assign({
+      client_id: clientId,
+      format: 'json',
+      limit: '1',
+      fullcount: 'true',
+      vocalinstrumental: 'instrumental'
+    }, filterParams));
+    var res = await fetch('https://api.jamendo.com/v3.0/tracks/?' + query.toString());
+    var json = await res.json();
+    return Number((json.headers && json.headers.results_fullcount) || 0);
+  }
+
+  async function fetchRandomTracks(count) {
+    var tag = els.tagSelect.value;
+    var speed = els.speedSelect.value;
+    var filterParams = {};
+    if (tag) filterParams.fuzzytags = tag;
+    if (speed) filterParams.speed = speed;
+
+    var total = await getFullCount(filterParams);
+    if (!total) throw new Error('Jamendo 返回结果为空');
+
+    var usedOffsets = new Set();
+    var tracks = [];
+    var pool = Math.max(1, Math.min(total, 500));
+    var maxCount = Math.min(count, pool);
+
+    for (var i = 0; i < maxCount; i += 1) {
+      var offset;
+      var guard = 0;
+      do {
+        offset = Math.floor(Math.random() * pool);
+        guard += 1;
+      } while (usedOffsets.has(offset) && guard < 50);
+
+      usedOffsets.add(offset);
+      var track = await searchJamendo(Object.assign({}, filterParams, { offset: String(offset) }));
+      if (track) tracks.push(track);
+    }
+
+    return tracks;
+  }
+
+  function drawTimeline() {
+    var canvas = els.timelineCanvas;
+    var ctx = canvas.getContext('2d');
+    var width = canvas.width;
+    var height = canvas.height;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#0e0e18';
+    ctx.fillRect(0, 0, width, height);
+
+    var padX = 20;
+    var rowH = 74;
+    var barH = 24;
+    var maxTime = 0;
+    var segDur = Number(els.segmentRange.value);
+
+    state.tracks.forEach(function(track) {
+      var playDur = getAdaptivePlayDuration(track, segDur);
+      maxTime += playDur;
+    });
+
+    if (!maxTime) return;
+
+    var currentX = padX;
+    var usableW = width - padX * 2;
+
+    state.tracks.forEach(function(track, index) {
+      var playDur = getAdaptivePlayDuration(track, segDur);
+      var w = (playDur / maxTime) * usableW;
+      var y = 26 + index * rowH;
+
+      ctx.fillStyle = index === 0 ? '#c78a46' : '#89b4ff';
+      ctx.fillRect(currentX, y, w, barH);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(track.name || ('Track ' + (index + 1)), currentX, y - 8);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      track.analysis.sections.forEach(function(section) {
+        var sx = currentX + (section / Math.max(1, track.duration)) * w;
+        ctx.fillRect(sx, y, 1, barH);
+      });
+
+      currentX += w;
+    });
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(padX, height - 24);
+    ctx.lineTo(width - padX, height - 24);
+    ctx.stroke();
+  }
+
+  function getAdaptivePlayDuration(track, segDur) {
+    var minDur = Math.round(segDur * 0.5);
+    var maxDur = Math.round(segDur * 1.5);
+    var exitPoints = track.analysis.exitPoints || [];
+    var best = segDur;
+
+    for (var i = 0; i < exitPoints.length; i += 1) {
+      var candidate = exitPoints[i] - track.analysis.bestStart;
+      if (candidate >= minDur && candidate <= maxDur) {
+        best = candidate;
+        break;
+      }
+    }
+
+    return Math.max(minDur, Math.min(maxDur, best));
+  }
+
+  function cancelPlayer(player) {
+    player.active = false;
+    player.timers.forEach(clearTimeout);
+    player.timers = [];
+    cancelAnimationFrame(player.rafId);
+    [player.audioA, player.audioB].forEach(function(audio) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    });
+    player.gainA.gain.value = 1;
+    player.gainB.gain.value = 0;
+    player.filterA.frequency.value = 22000;
+    player.filterB.frequency.value = 22000;
+    player.ui.status.textContent = 'Idle';
+    player.ui.current.textContent = '-';
+    player.ui.next.textContent = '-';
+    player.ui.meter.style.width = '0%';
+    player.ui.volume.textContent = '0%';
+    player.ui.bpm.textContent = 'BPM --';
+    player.ui.key.textContent = 'Key --';
+    player.ui.section.textContent = 'Section --';
+  }
+
+  function stopAll() {
+    state.running = false;
+    state.players.forEach(cancelPlayer);
+    setControlsState();
+    log('已停止所有 mode');
+  }
+
+  async function ensureAudioReady(player) {
+    if (player.context.state === 'suspended') {
+      await player.context.resume();
+    }
+  }
+
+  function updatePlayerMeters(player, track) {
+    if (!player.active) return;
+    var activeAudio = player.activeDeck === 'A' ? player.audioA : player.audioB;
+    var progress = activeAudio.duration ? (activeAudio.currentTime / activeAudio.duration) * 100 : 0;
+    var sectionIndex = 0;
+
+    (track.analysis.sections || []).forEach(function(section, index) {
+      if (activeAudio.currentTime >= section) sectionIndex = index + 1;
+    });
+
+    player.ui.meter.style.width = Math.max(0, Math.min(100, progress)).toFixed(1) + '%';
+    var currentGain = player.activeDeck === 'A' ? player.gainA.gain.value : player.gainB.gain.value;
+    player.ui.volume.textContent = Math.round(currentGain * 100) + '%';
+    player.ui.section.textContent = 'Section ' + sectionIndex;
+
+    player.rafId = requestAnimationFrame(function() {
+      updatePlayerMeters(player, track);
+    });
+  }
+
+  function scheduleCrossfade(player, fromAudio, toAudio, fromGain, toGain, fromFilter, toFilter, transitionMs) {
+    var start = performance.now();
+    var modeId = player.mode.id;
+
+    function tick(now) {
+      if (!player.active) return;
+      var t = Math.min(1, (now - start) / transitionMs);
+      fromGain.gain.value = 1 - t;
+      toGain.gain.value = t;
+
+      if (modeId === 'eqCrossfade') {
+        fromFilter.frequency.value = 22000 - (20000 * t);
+        toFilter.frequency.value = 400 + (21600 * t);
+      } else if (modeId === 'filterSweep') {
+        fromFilter.frequency.value = 8000 - (7600 * t);
+        toFilter.frequency.value = 300 + (21700 * t);
+      } else {
+        fromFilter.frequency.value = 14000 - (12000 * t);
+        toFilter.frequency.value = 1200 + (18000 * t);
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  async function runPlayer(player) {
+    await ensureAudioReady(player);
+    player.active = true;
+    player.currentIndex = 0;
+    player.activeDeck = 'A';
+    player.ui.status.textContent = 'Running';
+
+    var trackA = state.tracks[0];
+    var trackB = state.tracks[1];
+    var segDur = Number(els.segmentRange.value);
+    var transitionSec = Number(els.transitionRange.value);
+
+    player.audioA.src = trackA.audio;
+    player.audioB.src = trackB.audio;
+
+    player.audioA.currentTime = Math.min(trackA.analysis.bestStart, Math.max(0, (trackA.duration || 0) - 5));
+    player.audioB.currentTime = Math.min(trackB.analysis.bestStart, Math.max(0, (trackB.duration || 0) - 5));
+
+    player.ui.current.textContent = trackA.name || 'Track 1';
+    player.ui.next.textContent = trackB.name || 'Track 2';
+    player.ui.bpm.textContent = 'BPM ' + trackA.analysis.bpm;
+    player.ui.key.textContent = 'Key ' + trackA.analysis.key;
+
+    await player.audioA.play();
+    log(player.mode.title + ': 开始播放 ' + (trackA.name || 'Track 1'));
+    updatePlayerMeters(player, trackA);
+
+    var playDurA = getAdaptivePlayDuration(trackA, segDur);
+    var playDurB = getAdaptivePlayDuration(trackB, segDur);
+    var crossfadeDelay = Math.max(1, playDurA - transitionSec) * 1000;
+
+    player.timers.push(setTimeout(async function() {
+      if (!player.active) return;
+      player.activeDeck = 'B';
+      player.ui.current.textContent = trackB.name || 'Track 2';
+      player.ui.next.textContent = '-';
+      player.ui.bpm.textContent = 'BPM ' + trackB.analysis.bpm;
+      player.ui.key.textContent = 'Key ' + trackB.analysis.key;
+
+      try {
+        await player.audioB.play();
+      } catch (error) {
+        log(player.mode.title + ': 第二首播放失败 - ' + error.message);
+      }
+
+      log(player.mode.title + ': 进入过渡');
+      scheduleCrossfade(
+        player,
+        player.audioA,
+        player.audioB,
+        player.gainA,
+        player.gainB,
+        player.filterA,
+        player.filterB,
+        transitionSec * 1000
+      );
+
+      player.timers.push(setTimeout(function() {
+        if (!player.active) return;
+        player.audioA.pause();
+        player.audioA.currentTime = 0;
+        updatePlayerMeters(player, trackB);
+        log(player.mode.title + ': 切到第二首');
+      }, transitionSec * 1000));
+    }, crossfadeDelay));
+
+    player.timers.push(setTimeout(function() {
+      if (!player.active) return;
+      player.active = false;
+      player.ui.status.textContent = 'Finished';
+      player.audioB.pause();
+      player.ui.meter.style.width = '100%';
+      player.ui.volume.textContent = '0%';
+      log(player.mode.title + ': 播放完成');
+
+      var allDone = state.players.every(function(item) {
+        return !item.active;
+      });
+      if (allDone) {
+        state.running = false;
+        setControlsState();
+      }
+    }, (playDurA + playDurB) * 1000));
+  }
+
+  async function loadTracks() {
+    try {
+      els.loadBtn.disabled = true;
+      log('开始从 Jamendo 拉取歌曲...');
+      var tracks = await fetchRandomTracks(2);
+
+      if (tracks.length < 2) {
+        throw new Error('返回歌曲不足 2 首');
+      }
+
+      state.tracks = tracks.map(function(track) {
+        track.analysis = analyzeTrack(track);
+        return track;
+      });
+
+      renderTracks();
+      drawTimeline();
+      setControlsState();
+      log('已加载 2 首歌');
+    } catch (error) {
+      log('加载失败: ' + error.message);
+      alert(error.message);
+    } finally {
+      els.loadBtn.disabled = false;
+    }
+  }
+
+  async function startMix() {
+    if (state.tracks.length < 2) return;
+    stopAll();
+    state.running = true;
+    setControlsState();
+    log('开始 3 路独立对比');
+
+    for (var i = 0; i < state.players.length; i += 1) {
+      runPlayer(state.players[i]);
+    }
+  }
+
+  function bindEvents() {
+    els.clientIdInput.value = state.clientId;
+    els.segmentRange.addEventListener('input', function() {
+      els.segmentValue.textContent = els.segmentRange.value;
+      drawTimeline();
+    });
+    els.transitionRange.addEventListener('input', function() {
+      els.transitionValue.textContent = els.transitionRange.value;
+    });
+    els.loadBtn.addEventListener('click', loadTracks);
+    els.startBtn.addEventListener('click', startMix);
+    els.stopBtn.addEventListener('click', stopAll);
+  }
+
+  renderPlayers();
+  renderTracks();
+  drawTimeline();
+  bindEvents();
+  setControlsState();
+  log('恢复版 Smart DJ Test 已就绪');
+})();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibrise Smart DJ Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a12;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 { font-size: 20px; margin-bottom: 16px; color: #fff; }
+  h2 { font-size: 15px; margin-bottom: 8px; color: #ccc; }
+  .controls {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 16px; align-items: center;
+  }
+  select, button, input {
+    padding: 8px 16px; border-radius: 8px; border: 1px solid #333;
+    background: #1a1a2e; color: #e0e0e0; font-size: 14px;
+    cursor: pointer;
+  }
+  button { background: #2d2d5e; }
+  button:hover { background: #3d3d7e; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .track-info {
+    background: #111122; border-radius: 10px; padding: 12px 16px;
+    margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .track-info .name { font-size: 13px; font-weight: 600; }
+  .track-info .meta { font-size: 11px; color: #888; }
+  .track-info .bpm { font-size: 12px; color: #5566ff; font-family: monospace; }
+  .players-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px;
+  }
+  .player-panel {
+    background: #0e0e1e; border: 1px solid #222; border-radius: 12px; padding: 16px;
+  }
+  .player-panel.playing { border-color: #5566ff; }
+  .player-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+  }
+  .player-header h2 { margin: 0; }
+  .player-btn { padding: 6px 14px; font-size: 12px; border-radius: 6px; }
+  .player-timeline {
+    background: #111122; border-radius: 6px; position: relative; height: 52px;
+    margin-bottom: 8px; overflow: hidden;
+  }
+  .tl-track {
+    position: absolute; height: 18px; border-radius: 3px; opacity: 0.8;
+    display: flex; align-items: center; padding-left: 5px;
+    font-size: 9px; color: #fff; font-weight: 600;
+  }
+  .tl-playhead {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: #ff4444; z-index: 10; left: 0;
+  }
+  .meter-row { display: flex; gap: 6px; align-items: center; font-size: 11px; color: #666; margin-top: 4px; }
+  .meter-bar { flex: 1; height: 5px; background: #1a1a2e; border-radius: 3px; overflow: hidden; }
+  .meter-fill { height: 100%; border-radius: 3px; transition: width 0.1s; }
+  .meter-fill.v0 { background: linear-gradient(90deg, #3344aa, #5566ff); }
+  .meter-fill.v1 { background: linear-gradient(90deg, #aa4433, #ff6655); }
+  .param-group { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .param-group label { color: #888; }
+  .param-group input[type="range"] { width: 80px; }
+  #log {
+    background: #0d0d1a; border: 1px solid #222; border-radius: 8px;
+    padding: 12px; font-family: monospace; font-size: 11px;
+    max-height: 180px; overflow-y: auto; line-height: 1.5;
+    margin-top: 16px;
+  }
+  .log-time { color: #555; }
+  .log-info { color: #5566ff; }
+  .log-warn { color: #ffaa33; }
+  .log-ok { color: #33cc66; }
+  @media (max-width: 700px) {
+    .players-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Smart DJ Test — 4 模式对比</h1>
+
+<div class="controls">
+  <select id="tagSelect">
+    <option value="happy">晴 - happy</option>
+    <option value="lounge+downtempo">多云 - lounge+downtempo</option>
+    <option value="chillout">阴天 - chillout</option>
+    <option value="atmospheric">雾 - atmospheric</option>
+    <option value="lofi+chillhop">毛毛雨 - lofi+chillhop</option>
+    <option value="jazz" selected>小雨 - jazz</option>
+    <option value="cinematic">大雨 - cinematic</option>
+    <option value="soft">小雪 - soft</option>
+    <option value="newage">中雪 - newage</option>
+    <option value="epic+adventure">雷暴 - epic+adventure</option>
+  </select>
+  <select id="speedSelect">
+    <option value="low">low (凌晨)</option>
+    <option value="medium" selected>medium (早晨)</option>
+    <option value="high">high (白天)</option>
+  </select>
+  <button id="btnLoad" onclick="loadTracks()">加载 2 首歌</button>
+  <button onclick="stopAll()">全部停止</button>
+</div>
+
+<div class="param-group" style="margin-bottom: 12px;">
+  <label>目标时长</label>
+  <input type="range" id="segDuration" min="15" max="90" value="30">
+  <span id="segDurationVal">~30s</span>
+  <span style="color:#555; font-size:11px; margin-left:4px;">(按段落自动调整)</span>
+  <label style="margin-left: 16px;">过渡时长</label>
+  <input type="range" id="fadeDuration" min="2" max="15" value="10">
+  <span id="fadeDurationVal">10s</span>
+</div>
+
+<div id="trackInfoArea"></div>
+
+<div class="players-grid" id="playersGrid"></div>
+
+<div id="log"></div>
+
+<script>
+const CID = '8e61e407';
+const API = 'https://api.jamendo.com/v3.0/tracks/';
+
+let audioCtx = null;
+let songData = []; // shared song analysis data (2 songs)
+const players = {}; // keyed by mode name
+
+const TRANSITION_MODES = ['eqCrossfade', 'filterSweep', 'reverbWash'];
+const TRANSITION_LABELS = {
+  eqCrossfade: 'EQ Crossfade',
+  filterSweep: 'Filter Sweep 🌊',
+  reverbWash: 'Reverb Wash 🌫️',
+};
+
+document.getElementById('segDuration').oninput = e => {
+  document.getElementById('segDurationVal').textContent = '~' + e.target.value + 's';
+};
+document.getElementById('fadeDuration').oninput = e => {
+  document.getElementById('fadeDurationVal').textContent = e.target.value + 's';
+};
+
+function log(msg, cls = 'info') {
+  const el = document.getElementById('log');
+  const now = new Date().toLocaleTimeString('en', { hour12: false });
+  el.innerHTML += `<div><span class="log-time">[${now}]</span> <span class="log-${cls}">${msg}</span></div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ====== FETCH ======
+async function fetchTracks(tag, speed, count = 10) {
+  const total = await fetch(`${API}?client_id=${CID}&format=json&limit=1&fullcount=true&vocalinstrumental=instrumental&durationbetween=60_600&fuzzytags=${tag}&speed=${speed}`)
+    .then(r => r.json()).then(d => d.headers?.results_fullcount || 100);
+  log(`池子大小: ${total} 首 (tag=${tag}, speed=${speed})`);
+  const songs = [];
+  const usedOffsets = new Set();
+  for (let i = 0; i < count; i++) {
+    let offset;
+    do { offset = Math.floor(Math.random() * Math.min(total, 500)); }
+    while (usedOffsets.has(offset));
+    usedOffsets.add(offset);
+    const data = await fetch(`${API}?client_id=${CID}&format=json&limit=1&vocalinstrumental=instrumental&durationbetween=60_600&fuzzytags=${tag}&speed=${speed}&audioformat=mp32&imagesize=200&offset=${offset}`)
+      .then(r => r.json());
+    if (data.results?.[0]) songs.push(data.results[0]);
+  }
+  return songs;
+}
+
+// ====== ANALYSIS (unchanged) ======
+async function analyzeTrack(url, totalDuration) {
+  try {
+    const resp = await fetch(url, { headers: { 'Range': 'bytes=0-524287' } });
+    const arrayBuf = await resp.arrayBuffer();
+    const offCtx = new OfflineAudioContext(1, 44100 * 30, 44100);
+    const audioBuf = await offCtx.decodeAudioData(arrayBuf);
+    const raw = audioBuf.getChannelData(0);
+    const sr = audioBuf.sampleRate;
+    const decodedSecs = raw.length / sr;
+
+    const bpmData = raw.subarray(0, Math.min(raw.length, sr * 10));
+    const winSize = 1024, hop = 1024;
+    const numWinBpm = Math.floor((bpmData.length - winSize) / hop);
+    const bpmEnergy = new Float32Array(numWinBpm);
+    for (let i = 0; i < numWinBpm; i++) {
+      let sum = 0; const s = i * hop;
+      for (let j = s; j < s + winSize; j++) sum += bpmData[j] * bpmData[j];
+      bpmEnergy[i] = sum / winSize;
+    }
+    const minBPM = 60, maxBPM = 180;
+    const minLag = Math.floor(60 / maxBPM * sr / hop);
+    const maxLag = Math.floor(60 / minBPM * sr / hop);
+    let bestLag = minLag, bestCorr = -Infinity;
+    for (let lag = minLag; lag <= Math.min(maxLag, bpmEnergy.length - 1); lag++) {
+      let corr = 0; const n = Math.min(bpmEnergy.length - lag, 800);
+      for (let i = 0; i < n; i++) corr += bpmEnergy[i] * bpmEnergy[i + lag];
+      if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+    }
+    let bpm = 60 / (bestLag * hop / sr);
+    while (bpm > 140) bpm /= 2;
+    while (bpm < 70) bpm *= 2;
+    bpm = Math.round(bpm);
+
+    const secHop = 8192;
+    const numWinFull = Math.floor((raw.length - secHop) / secHop);
+    if (numWinFull < 2) {
+      const avgE = bpmEnergy.reduce((a, b) => a + b, 0) / bpmEnergy.length;
+      return { bpm, energy: avgE, sections: [], bestStart: totalDuration * 0.15, cutPoints: [], beatOffset: 0, key: { root: 0, mode: 'major', name: 'C' } };
+    }
+    const fullEnergy = new Float32Array(numWinFull);
+    for (let i = 0; i < numWinFull; i++) {
+      let sum = 0; const s = i * secHop;
+      for (let j = s; j < s + secHop; j++) sum += raw[j] * raw[j];
+      fullEnergy[i] = sum / secHop;
+    }
+    const smoothWin = Math.max(1, Math.round(1.5 * sr / secHop));
+    const smoothed = new Float32Array(numWinFull);
+    for (let i = 0; i < numWinFull; i++) {
+      let sum = 0, cnt = 0;
+      for (let j = Math.max(0, i - smoothWin); j <= Math.min(numWinFull - 1, i + smoothWin); j++) { sum += fullEnergy[j]; cnt++; }
+      smoothed[i] = sum / cnt;
+    }
+    const avgEnergy = smoothed.reduce((a, b) => a + b, 0) / smoothed.length;
+    const threshold = avgEnergy * 0.25;
+    const sections = [{ time: 0, energy: smoothed[0] || 0 }];
+    for (let i = 1; i < smoothed.length; i++) {
+      const diff = Math.abs(smoothed[i] - smoothed[i - 1]);
+      if (diff > threshold) {
+        const time = (i * secHop) / sr;
+        if (time - sections[sections.length - 1].time > 2.5) sections.push({ time, energy: smoothed[i] });
+      }
+    }
+    const scale = totalDuration / decodedSecs;
+    const scaledSections = sections.map(s => ({ time: Math.min(s.time * scale, totalDuration), energy: s.energy }));
+    const minStart = totalDuration * 0.1;
+    let bestStart = totalDuration * 0.15;
+    for (const sec of scaledSections) { if (sec.time >= minStart) { bestStart = sec.time; break; } }
+    const cutPoints = scaledSections.map(s => s.time).filter(t => t > 0);
+
+    const onsetHop = 512;
+    const numOnset = Math.floor((bpmData.length - onsetHop) / onsetHop);
+    const onsetEnv = new Float32Array(numOnset);
+    for (let i = 0; i < numOnset; i++) { let sum = 0; const s = i * onsetHop; for (let j = s; j < s + onsetHop; j++) sum += Math.abs(bpmData[j]); onsetEnv[i] = sum / onsetHop; }
+    const flux = new Float32Array(numOnset);
+    for (let i = 1; i < numOnset; i++) flux[i] = Math.max(0, onsetEnv[i] - onsetEnv[i - 1]);
+    const fluxMean = flux.reduce((a, b) => a + b, 0) / flux.length;
+    const fluxThresh = fluxMean * 1.5;
+    const onsets = [];
+    for (let i = 1; i < flux.length - 1; i++) {
+      if (flux[i] > fluxThresh && flux[i] > flux[i - 1] && flux[i] >= flux[i + 1]) onsets.push(i * onsetHop / sr);
+    }
+    const beatInterval = 60 / bpm;
+    let bestPhase = 0, bestScore = -1;
+    for (let p = 0; p < 32; p++) {
+      const phase = (p / 32) * beatInterval; let score = 0;
+      for (const t of onsets) { const dist = ((t - phase) % beatInterval + beatInterval) % beatInterval; score += Math.max(0, 1 - Math.min(dist, beatInterval - dist) / (beatInterval * 0.25)); }
+      if (score > bestScore) { bestScore = score; bestPhase = phase; }
+    }
+
+    const keyData = raw.subarray(0, Math.min(raw.length, sr * 8));
+    const chroma = new Float64Array(12);
+    const noteFreqs = [];
+    for (let oct = 2; oct <= 5; oct++) for (let pc = 0; pc < 12; pc++) noteFreqs.push({ pc, freq: 440 * Math.pow(2, (pc - 9) / 12 + (oct - 4)) });
+    const blockSize = 4096;
+    const numBlocks = Math.floor(keyData.length / blockSize);
+    for (let b = 0; b < numBlocks; b++) {
+      const block = keyData.subarray(b * blockSize, (b + 1) * blockSize);
+      for (const { pc, freq } of noteFreqs) {
+        const k = Math.round(freq * blockSize / sr); const w = 2 * Math.PI * k / blockSize; const coeff = 2 * Math.cos(w);
+        let s0 = 0, s1 = 0, s2 = 0;
+        for (let n = 0; n < blockSize; n++) { s0 = block[n] + coeff * s1 - s2; s2 = s1; s1 = s0; }
+        chroma[pc] += s1 * s1 + s2 * s2 - coeff * s1 * s2;
+      }
+    }
+    const chromaMax = Math.max(...chroma) || 1;
+    for (let i = 0; i < 12; i++) chroma[i] /= chromaMax;
+    const majorProfile = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
+    const minorProfile = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+    let bestKeyRoot = 0, bestKeyMode = 'major', bestKeyCorr = -Infinity;
+    for (let root = 0; root < 12; root++) {
+      for (const [profile, mode] of [[majorProfile, 'major'], [minorProfile, 'minor']]) {
+        let sumXY = 0, sumX2 = 0, sumY2 = 0;
+        for (let i = 0; i < 12; i++) { const x = chroma[(i + root) % 12]; const y = profile[i]; sumXY += x * y; sumX2 += x * x; sumY2 += y * y; }
+        const corr = sumXY / (Math.sqrt(sumX2 * sumY2) || 1);
+        if (corr > bestKeyCorr) { bestKeyCorr = corr; bestKeyRoot = root; bestKeyMode = mode; }
+      }
+    }
+    const KEY_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const keyName = KEY_NAMES[bestKeyRoot] + (bestKeyMode === 'minor' ? 'm' : '');
+
+    return { bpm, energy: avgEnergy, sections: scaledSections, bestStart, cutPoints, beatOffset: bestPhase, key: { root: bestKeyRoot, mode: bestKeyMode, name: keyName } };
+  } catch (e) { return null; }
+}
+
+const CAMELOT_MAP = {
+  '0minor':1,'7minor':2,'2minor':3,'9minor':4,'4minor':5,'11minor':6,
+  '6minor':7,'1minor':8,'8minor':9,'3minor':10,'10minor':11,'5minor':12,
+  '3major':1,'10major':2,'5major':3,'0major':4,'7major':5,'2major':6,
+  '9major':7,'4major':8,'11major':9,'6major':10,'1major':11,'8major':12,
+};
+function camelotNum(key) { return CAMELOT_MAP[key.root + key.mode] || 1; }
+function camelotLetter(key) { return key.mode === 'minor' ? 'A' : 'B'; }
+function keyCompatScore(k1, k2) {
+  const n1 = camelotNum(k1), n2 = camelotNum(k2);
+  const l1 = camelotLetter(k1), l2 = camelotLetter(k2);
+  if (n1 === n2) return 1.0;
+  const diff = Math.min(Math.abs(n1 - n2), 12 - Math.abs(n1 - n2));
+  if (diff === 1 && l1 === l2) return 0.85;
+  if (diff === 1) return 0.6;
+  return Math.max(0, 0.5 - diff * 0.08);
+}
+
+// ====== LOAD TRACKS (2 songs) ======
+async function loadTracks() {
+  const tag = document.getElementById('tagSelect').value;
+  const speed = document.getElementById('speedSelect').value;
+  document.getElementById('btnLoad').disabled = true;
+  stopAll();
+  songData = [];
+  log('拉取候选歌曲 (10首)...', 'warn');
+  const candidates = await fetchTracks(tag, speed, 10);
+  if (candidates.length < 2) { log('歌曲不足', 'warn'); document.getElementById('btnLoad').disabled = false; return; }
+
+  log(`拉取了 ${candidates.length} 首，正在并行分析...`, 'warn');
+  const results = await Promise.all(
+    candidates.map(s => analyzeTrack(s.audio, parseInt(s.duration) || 180).then(r => ({ song: s, ...(r || {}) })))
+  );
+  const analyzed = results.filter(r => r.bpm);
+  analyzed.forEach(r => {
+    log(`  ${r.song.name}: ${r.bpm} BPM, key=${r.key?.name}, ${r.sections?.length || 0} 段`, 'info');
+  });
+  if (analyzed.length < 2) { log('分析成功不足 2 首', 'warn'); document.getElementById('btnLoad').disabled = false; return; }
+
+  analyzed.sort((a, b) => a.bpm - b.bpm);
+  let bestIdx = 0, bestScore = -Infinity;
+  for (let i = 0; i <= analyzed.length - 2; i++) {
+    const spread = analyzed[i + 1].bpm - analyzed[i].bpm;
+    const bpmScore = Math.max(0, 1 - spread / 30);
+    const keyScore = keyCompatScore(analyzed[i].key, analyzed[i + 1].key);
+    const score = bpmScore * 0.6 + keyScore * 0.4;
+    if (score > bestScore) { bestScore = score; bestIdx = i; }
+  }
+  const picked = analyzed.slice(bestIdx, bestIdx + 2);
+  picked.sort((a, b) => a.energy - b.energy);
+
+  const kc = Math.round(keyCompatScore(picked[0].key, picked[1].key) * 100);
+  log(`选出 2 首 (BPM差 ${picked[1].bpm - picked[0].bpm}, 调性 ${kc}%):`, 'ok');
+  picked.forEach((p, i) => {
+    const level = i === 0 ? '🌙 柔和' : '⚡ 活力';
+    log(`  ✓ ${p.song.name}: ${p.bpm} BPM, ${p.key.name}, ${level}`, 'ok');
+  });
+
+  songData = picked;
+  renderTrackInfo();
+  renderPlayers();
+  document.getElementById('btnLoad').disabled = false;
+  log('准备就绪，点击各播放器的 ▶ 按钮试听', 'ok');
+}
+
+function renderTrackInfo() {
+  const area = document.getElementById('trackInfoArea');
+  area.innerHTML = songData.map((s, i) => {
+    const d = parseInt(s.song.duration) || 0;
+    const level = i === 0 ? '🌙 柔和' : '⚡ 活力';
+    return `<div class="track-info">
+      <div><span class="name">#${i+1} ${s.song.name}</span>
+      <span class="meta"> · ${s.song.artist_name} · ${Math.floor(d/60)}:${(d%60).toString().padStart(2,'0')} · ${level}</span></div>
+      <span class="bpm">${s.bpm} BPM · ${s.key.name}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPlayers() {
+  const grid = document.getElementById('playersGrid');
+  grid.innerHTML = '';
+  TRANSITION_MODES.forEach(mode => {
+    players[mode] = { tracks: [], interval: null, startTime: 0, totalDur: 0 };
+    grid.innerHTML += `
+      <div class="player-panel" id="panel-${mode}">
+        <div class="player-header">
+          <h2>${TRANSITION_LABELS[mode]}</h2>
+          <div>
+            <button class="player-btn" id="play-${mode}" onclick="startPlayer('${mode}')">▶ 播放</button>
+            <button class="player-btn" id="stop-${mode}" onclick="stopPlayer('${mode}')" disabled>■ 停止</button>
+          </div>
+        </div>
+        <div class="player-timeline" id="tl-${mode}">
+          <div class="tl-playhead" id="ph-${mode}"></div>
+        </div>
+        <div class="meter-row">
+          <span>#1</span>
+          <div class="meter-bar"><div class="meter-fill v0" id="v0-${mode}" style="width:0%"></div></div>
+          <span>#2</span>
+          <div class="meter-bar"><div class="meter-fill v1" id="v1-${mode}" style="width:0%"></div></div>
+        </div>
+      </div>`;
+  });
+}
+
+// ====== AUDIO SETUP ======
+function initAudioCtx() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function createTrackAudio(songInfo) {
+  const audio = new Audio();
+  audio.crossOrigin = 'anonymous';
+  audio.src = songInfo.audio;
+  audio.preload = 'auto';
+  const t = { audio, info: songInfo, webAudio: false };
+  try {
+    t.sourceNode = audioCtx.createMediaElementSource(audio);
+    t.gainNode = audioCtx.createGain(); t.gainNode.gain.value = 0;
+    t.lowpass = audioCtx.createBiquadFilter(); t.lowpass.type = 'lowpass'; t.lowpass.frequency.value = 20000; t.lowpass.Q.value = 0.7;
+    t.highpass = audioCtx.createBiquadFilter(); t.highpass.type = 'highpass'; t.highpass.frequency.value = 20; t.highpass.Q.value = 0.7;
+    t.scGain = audioCtx.createGain(); t.scGain.gain.value = 1;
+    t.analyser = audioCtx.createAnalyser(); t.analyser.fftSize = 256;
+    t.sourceNode.connect(t.lowpass).connect(t.highpass).connect(t.gainNode).connect(t.scGain).connect(t.analyser).connect(audioCtx.destination);
+    t.webAudio = true;
+  } catch (e) { t.webAudio = false; }
+  return t;
+}
+
+function waitForCanPlay(audio) {
+  return new Promise((resolve, reject) => {
+    if (audio.readyState >= 3) return resolve();
+    const onReady = () => { cleanup(); resolve(); };
+    const onError = () => { cleanup(); reject(new Error('load failed')); };
+    const cleanup = () => { audio.removeEventListener('canplay', onReady); audio.removeEventListener('error', onError); };
+    audio.addEventListener('canplay', onReady); audio.addEventListener('error', onError);
+  });
+}
+
+function seekAndWait(audio, time) {
+  return new Promise(resolve => {
+    audio.currentTime = time;
+    if (!audio.seeking) return resolve();
+    const onSeeked = () => { audio.removeEventListener('seeked', onSeeked); resolve(); };
+    audio.addEventListener('seeked', onSeeked);
+  });
+}
+
+function resetFilters(t) {
+  if (!t.webAudio) return;
+  t.lowpass.frequency.cancelScheduledValues(audioCtx.currentTime);
+  t.highpass.frequency.cancelScheduledValues(audioCtx.currentTime);
+  t.gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+  t.lowpass.frequency.setValueAtTime(20000, audioCtx.currentTime);
+  t.highpass.frequency.setValueAtTime(20, audioCtx.currentTime);
+  if (t.scGain) { t.scGain.gain.cancelScheduledValues(audioCtx.currentTime); t.scGain.gain.setValueAtTime(1, audioCtx.currentTime); }
+}
+
+function smoothRateChange(audio, fromRate, toRate, durationMs) {
+  const startTime = performance.now();
+  const step = () => {
+    const elapsed = performance.now() - startTime;
+    const progress = Math.min(elapsed / durationMs, 1);
+    const eased = progress * progress * (3 - 2 * progress);
+    audio.playbackRate = fromRate + (toRate - fromRate) * eased;
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// ====== TRANSITION FUNCTIONS ======
+function volumeFadeOut(t, duration) {
+  const start = t.audio.volume; const st = performance.now();
+  const fade = () => { const p = Math.min((performance.now() - st) / 1000 / duration, 1); t.audio.volume = start * (1 - p); if (p < 1) requestAnimationFrame(fade); };
+  requestAnimationFrame(fade);
+}
+function volumeFadeIn(t, duration) {
+  t.audio.volume = 0; const st = performance.now();
+  const fade = () => { const p = Math.min((performance.now() - st) / 1000 / duration, 1); t.audio.volume = p; if (p < 1) requestAnimationFrame(fade); };
+  requestAnimationFrame(fade);
+}
+
+function applyEqCrossfade(prev, next, duration) {
+  if (!prev.webAudio) { volumeFadeOut(prev, duration); volumeFadeIn(next, duration); return; }
+  const now = audioCtx.currentTime;
+  prev.lowpass.frequency.setValueAtTime(20000, now); prev.lowpass.frequency.exponentialRampToValueAtTime(200, now + duration * 0.8);
+  prev.gainNode.gain.setValueAtTime(prev.gainNode.gain.value || 1, now); prev.gainNode.gain.linearRampToValueAtTime(0, now + duration);
+  next.highpass.frequency.setValueAtTime(2000, now); next.highpass.frequency.exponentialRampToValueAtTime(20, now + duration * 0.8);
+  next.lowpass.frequency.setValueAtTime(20000, now); next.gainNode.gain.setValueAtTime(0, now); next.gainNode.gain.linearRampToValueAtTime(1, now + duration);
+}
+
+function applyFilterSweep(prev, next, duration) {
+  if (!prev.webAudio) { volumeFadeOut(prev, duration); volumeFadeIn(next, duration); return; }
+  const now = audioCtx.currentTime; const half = duration / 2;
+  prev.lowpass.frequency.setValueAtTime(20000, now); prev.lowpass.frequency.exponentialRampToValueAtTime(150, now + half);
+  prev.gainNode.gain.setValueAtTime(1, now); prev.gainNode.gain.linearRampToValueAtTime(0, now + half + 0.5);
+  next.lowpass.frequency.setValueAtTime(150, now); next.lowpass.frequency.exponentialRampToValueAtTime(20000, now + duration);
+  next.highpass.frequency.setValueAtTime(20, now); next.gainNode.gain.setValueAtTime(0.3, now); next.gainNode.gain.linearRampToValueAtTime(1, now + half);
+}
+
+function applyReverbWash(prev, next, duration) {
+  if (!prev.webAudio) { volumeFadeOut(prev, duration); volumeFadeIn(next, duration); return; }
+  const now = audioCtx.currentTime;
+  prev.highpass.frequency.setValueAtTime(20, now); prev.highpass.frequency.exponentialRampToValueAtTime(1200, now + duration * 0.6);
+  prev.lowpass.frequency.setValueAtTime(20000, now); prev.lowpass.frequency.exponentialRampToValueAtTime(2000, now + duration * 0.7);
+  prev.gainNode.gain.setValueAtTime(1, now); prev.gainNode.gain.linearRampToValueAtTime(0.5, now + duration * 0.5);
+  prev.gainNode.gain.exponentialRampToValueAtTime(0.02, now + duration * 0.95); prev.gainNode.gain.linearRampToValueAtTime(0, now + duration);
+  next.lowpass.frequency.setValueAtTime(400, now); next.lowpass.frequency.exponentialRampToValueAtTime(20000, now + duration * 0.8);
+  next.highpass.frequency.setValueAtTime(20, now); next.gainNode.gain.setValueAtTime(0, now);
+  next.gainNode.gain.linearRampToValueAtTime(0.3, now + duration * 0.2); next.gainNode.gain.linearRampToValueAtTime(1, now + duration * 0.7);
+}
+
+const TRANSITION_FNS = { eqCrossfade: applyEqCrossfade, filterSweep: applyFilterSweep, reverbWash: applyReverbWash };
+
+function applySidechainPump(track, bpm, duration) {
+  if (!track.webAudio || !track.scGain) return;
+  const beatInt = 60 / bpm; const now = audioCtx.currentTime;
+  const numBeats = Math.floor(duration / beatInt);
+  track.scGain.gain.cancelScheduledValues(now); track.scGain.gain.setValueAtTime(1, now);
+  for (let i = 0; i < numBeats; i++) {
+    const bt = now + i * beatInt;
+    track.scGain.gain.setValueAtTime(1, bt);
+    track.scGain.gain.linearRampToValueAtTime(0.35, bt + 0.015);
+    track.scGain.gain.linearRampToValueAtTime(1, bt + beatInt * 0.55);
+  }
+  track.scGain.gain.setValueAtTime(1, now + duration);
+}
+
+// ====== PER-PLAYER START/STOP ======
+async function startPlayer(mode) {
+  if (songData.length < 2) return;
+  initAudioCtx();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  stopPlayer(mode);
+
+  const segDur = parseInt(document.getElementById('segDuration').value);
+  const fadeDur = parseInt(document.getElementById('fadeDuration').value);
+  const p = players[mode];
+  p.tracks = [];
+
+  document.getElementById(`play-${mode}`).disabled = true;
+  document.getElementById(`stop-${mode}`).disabled = false;
+  document.getElementById(`panel-${mode}`).classList.add('playing');
+
+  for (let i = 0; i < 2; i++) {
+    const sd = songData[i];
+    const t = createTrackAudio(sd.song);
+    t.bpm = sd.bpm; t.energy = sd.energy; t.key = sd.key;
+    t.beatOffset = sd.beatOffset; t.bestStart = sd.bestStart;
+    t.cutPoints = sd.cutPoints || []; t.sections = sd.sections || [];
+    t.audio.load();
+    try {
+      await waitForCanPlay(t.audio);
+      let startPos = t.bestStart || (parseInt(sd.song.duration) || 60) * 0.2;
+      const beatInt = 60 / t.bpm;
+      const beatNum = Math.round((startPos - t.beatOffset) / beatInt);
+      startPos = Math.max(0, t.beatOffset + beatNum * beatInt);
+      startPos = Math.round(startPos * 100) / 100;
+      await seekAndWait(t.audio, startPos);
+      if (t.webAudio) t.gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      else t.audio.volume = 0;
+
+      const songDur = parseInt(sd.song.duration) || 180;
+      const minPlay = Math.max(15, segDur * 0.4);
+      const maxPlay = Math.min(segDur * 1.8, songDur - startPos - 5);
+      let playDur = segDur, bestDist = Infinity;
+      for (const cp of t.cutPoints) {
+        const dur = cp - startPos;
+        if (dur >= minPlay && dur <= maxPlay) { const dist = Math.abs(dur - segDur); if (dist < bestDist) { bestDist = dist; playDur = Math.round(dur); } }
+      }
+      t._startPos = startPos; t._playDur = playDur;
+      log(`[${TRANSITION_LABELS[mode]}] #${i+1} 从 ${Math.round(startPos)}s 播 ${playDur}s`, 'ok');
+    } catch (e) { t._startPos = 0; t._playDur = segDur; }
+    p.tracks.push(t);
+  }
+
+  p.totalDur = p.tracks.reduce((s, t) => s + t._playDur, 0);
+  p.startTime = performance.now();
+  drawPlayerTimeline(mode, fadeDur);
+
+  const t0 = p.tracks[0];
+  t0.audio.play().catch(() => {});
+  if (t0.webAudio) t0.gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+  else t0.audio.volume = 1;
+  log(`[${TRANSITION_LABELS[mode]}] ▶ 开始`, 'ok');
+
+  const delay = t0._playDur - fadeDur;
+  p._transTimer = setTimeout(() => doTransition(mode, fadeDur), delay * 1000);
+  p._endTimer = setTimeout(() => { log(`[${TRANSITION_LABELS[mode]}] 结束`, 'ok'); stopPlayer(mode); }, p.totalDur * 1000);
+  p.interval = setInterval(() => updatePlayerMeters(mode), 50);
+}
+
+function doTransition(mode, fadeDur) {
+  const p = players[mode];
+  const prev = p.tracks[0], next = p.tracks[1];
+
+  const matchRate = prev.bpm / next.bpm;
+  const nextBeatInt = 60 / next.bpm;
+  const nextTime = next.audio.currentTime;
+  const nextPhasePos = ((nextTime - next.beatOffset) % nextBeatInt + nextBeatInt) % nextBeatInt;
+  const adjustment = nextPhasePos % nextBeatInt;
+  if (adjustment > 0.02 && adjustment < nextBeatInt - 0.02) next.audio.currentTime = nextTime + adjustment;
+
+  const kc = Math.round(keyCompatScore(prev.key, next.key) * 100);
+  log(`[${TRANSITION_LABELS[mode]}] 🎛 ${prev.key.name}→${next.key.name} (${kc}%), rate=${matchRate.toFixed(3)}, sync ${Math.round(adjustment*1000)}ms`, 'warn');
+
+  next.audio.playbackRate = matchRate;
+  next.audio.play().catch(() => {});
+  TRANSITION_FNS[mode](prev, next, fadeDur);
+
+  if (next.webAudio) {
+    const pumpDur = fadeDur * 0.7;
+    setTimeout(() => applySidechainPump(next, prev.bpm, pumpDur), fadeDur * 0.15 * 1000);
+  }
+
+  setTimeout(() => {
+    smoothRateChange(next.audio, matchRate, 1.0, 4000);
+  }, fadeDur * 1000);
+  setTimeout(() => { prev.audio.pause(); resetFilters(prev); }, (fadeDur + 1) * 1000);
+}
+
+function stopPlayer(mode) {
+  const p = players[mode];
+  if (!p) return;
+  p.tracks.forEach(t => { if (t.audio) { t.audio.pause(); t.audio.currentTime = 0; t.audio.playbackRate = 1.0; } });
+  if (p.interval) { clearInterval(p.interval); p.interval = null; }
+  clearTimeout(p._transTimer); clearTimeout(p._endTimer);
+  p.tracks = [];
+  document.getElementById(`play-${mode}`).disabled = songData.length < 2;
+  document.getElementById(`stop-${mode}`).disabled = true;
+  document.getElementById(`panel-${mode}`).classList.remove('playing');
+  const ph = document.getElementById(`ph-${mode}`);
+  if (ph) ph.style.left = '0';
+  ['v0','v1'].forEach(k => { const el = document.getElementById(`${k}-${mode}`); if (el) el.style.width = '0%'; });
+}
+
+function stopAll() {
+  TRANSITION_MODES.forEach(m => stopPlayer(m));
+}
+
+function updatePlayerMeters(mode) {
+  const p = players[mode];
+  p.tracks.forEach((t, i) => {
+    if (!t.audio || t.audio.paused) return;
+    let vol = 0;
+    if (t.webAudio && t.analyser) {
+      const data = new Uint8Array(t.analyser.frequencyBinCount);
+      t.analyser.getByteFrequencyData(data);
+      vol = data.reduce((a, b) => a + b, 0) / data.length / 255;
+    } else { vol = t.audio.volume * 0.6; }
+    const el = document.getElementById(`v${i}-${mode}`);
+    if (el) el.style.width = (vol * 100) + '%';
+  });
+  const elapsed = (performance.now() - p.startTime) / 1000;
+  const pct = Math.min(100, (elapsed / p.totalDur) * 100);
+  const ph = document.getElementById(`ph-${mode}`);
+  if (ph) ph.style.left = pct + '%';
+}
+
+function drawPlayerTimeline(mode, fadeDur) {
+  const tl = document.getElementById(`tl-${mode}`);
+  tl.querySelectorAll('.tl-track').forEach(e => e.remove());
+  const p = players[mode];
+  const colors = ['#3344aa', '#aa4433'];
+  const total = p.totalDur;
+  let accum = 0;
+  p.tracks.forEach((t, i) => {
+    const start = accum - (i > 0 ? fadeDur : 0);
+    const dur = t._playDur;
+    accum += dur;
+    const el = document.createElement('div');
+    el.className = 'tl-track';
+    el.style.left = Math.max(0, start / total * 100) + '%';
+    el.style.width = ((accum - Math.max(0, start)) / total * 100) + '%';
+    el.style.top = (8 + i * 22) + 'px';
+    el.style.background = colors[i];
+    el.textContent = `#${i+1} ${t.info.name?.substring(0, 18)} (${dur}s)`;
+    tl.appendChild(el);
+  });
+}
+
+// Build initial player panels
+renderPlayers();
+</script>
+
+</body>
+</html>

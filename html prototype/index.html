@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vibrise</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Satoshi:wght@300..900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="phone-frame">
+
+<!-- ====== HOME SCREEN ====== -->
+<div class="screen" id="homeScreen">
+  <div class="home-bg" id="homeBg">
+    <div class="home-bg-base" id="homeBgBase"></div>
+    <div class="flow-orb" id="flowOrb0"></div>
+    <div class="flow-orb" id="flowOrb1"></div>
+    <div class="flow-orb" id="flowOrb2"></div>
+  </div>
+
+  <div class="home-header">
+    <div class="home-logo-big">Vibrise</div>
+    <div class="home-logo-sub">Wake up delighted</div>
+  </div>
+
+  <div class="home-content">
+    <div id="noAlarmState" class="home-empty" onclick="openAlarmSetting()">
+      <div class="home-empty-hint">Tap here to set your alarm</div>
+    </div>
+    <div class="alarm-list" id="alarmList"></div>
+  </div>
+
+  <div class="home-bottom-bar">
+    <button class="bottom-bar-icon" onclick="openFavoritesScreen()">♡</button>
+    <button class="bottom-bar-coffee" onclick="handleCoffeeClick()">
+      <svg class="coffee-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1.5a2.5 2.5 0 0 1 0 5H18"/><path d="M4 8h14v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8z"/><path d="M7 2v2"/><path d="M11 2v2"/><path d="M15 2v2"/></svg>
+      <span>Buy me a coffee</span>
+    </button>
+  </div>
+</div>
+
+<!-- ====== FAVORITES SCREEN ====== -->
+<div class="favorites-overlay" id="favoritesScreen" style="display:none;">
+  <button class="favorites-close" onclick="closeFavoritesScreen()">✕</button>
+
+  <div class="favorites-content" id="favoritesContent">
+    <div class="favorites-header">
+      <div class="favorites-title">Favorites</div>
+    </div>
+    <div class="favorites-empty" id="favoritesEmpty">No saved songs yet.</div>
+    <div class="favorites-list" id="favoritesList"></div>
+  </div>
+</div>
+
+<!-- ====== ALARM SETTING OVERLAY ====== -->
+<div class="setting-overlay" id="alarmSettingScreen" style="display:none;">
+  <button class="setting-close" onclick="cancelSetting()">✕</button>
+
+  <div class="setting-content">
+    <div class="time-picker">
+      <div class="time-picker-col">
+        <div class="time-picker-highlight"></div>
+        <div class="time-picker-scroll" id="hourScroll"></div>
+      </div>
+      <div class="time-picker-separator">:</div>
+      <div class="time-picker-col">
+        <div class="time-picker-highlight"></div>
+        <div class="time-picker-scroll" id="minuteScroll"></div>
+      </div>
+    </div>
+
+    <div class="day-selector" id="daySelector"></div>
+  </div>
+
+  <button class="setting-save-btn" onclick="saveAlarm()">Save</button>
+</div>
+
+<!-- ====== RING SCREEN ====== -->
+<div class="screen hidden" id="ringScreen">
+  <div class="ring-bg" id="ringBg">
+    <div class="ring-bg-base" id="ringBgBase"></div>
+    <div class="ring-bg-album" id="ringBgAlbum"></div>
+    <div class="flow-orb" id="ringFlowOrb0"></div>
+    <div class="flow-orb" id="ringFlowOrb1"></div>
+    <div class="flow-orb" id="ringFlowOrb2"></div>
+  </div>
+  <div class="ring-header">
+    <div class="ring-time" id="ringTime">07:00</div>
+    <div class="ring-date" id="ringDate">Monday March 23</div>
+  </div>
+
+  <div class="ring-center">
+    <button
+      class="ring-action-zone"
+      id="ringActionZone"
+    >
+      <div class="ring-action-copy">
+        <div class="ring-action-title">Hold to dismiss</div>
+        <div class="ring-action-subtitle">Tap to snooze</div>
+      </div>
+    </button>
+
+    <button class="ring-icon-button" onclick="handleCoffeeClick()">
+      <svg class="ring-icon-coffee" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1.5a2.5 2.5 0 0 1 0 5H18"/><path d="M4 8h14v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8z"/><path d="M7 2v2"/><path d="M11 2v2"/><path d="M15 2v2"/></svg>
+    </button>
+  </div>
+
+  <div class="ring-track">
+    <div class="ring-track-cover">
+      <div class="album-art-container">
+        <div class="album-art-glow" id="albumGlow"></div>
+        <div class="loading-spinner" id="albumLoading"><div class="spinner"></div></div>
+        <img class="album-art" id="albumArt" style="display:none;" alt="Album Art">
+      </div>
+    </div>
+    <div class="ring-track-copy">
+      <div class="song-title" id="songTitle">Finding music...</div>
+      <div class="song-artist" id="songArtist">Unknown Artist</div>
+    </div>
+    <div class="ring-track-actions">
+      <button class="ring-track-icon-btn" id="favoriteSongBtn" type="button" aria-label="Favorite" onclick="toggleCurrentSongFavorite()">
+        <span class="ring-track-icon-text ring-track-icon-outline" id="favoriteSongIconOutline">♡</span>
+        <span class="ring-track-icon-text ring-track-icon-solid" id="favoriteSongIconSolid">♥</span>
+      </button>
+      <button class="ring-track-icon-btn" type="button" aria-label="Share" onclick="openShareOverlay()">
+        <span class="ring-track-icon-text">⤴</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== OVERLAYS ====== -->
+<div class="overlay" id="snoozeOverlay">
+  <div class="snooze-content">
+    <div class="snooze-icon" aria-hidden="true">
+      <svg class="snooze-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"></circle><path d="M12 9.5v4l2.5 1.5"></path><path d="M6.5 3.5L4 6"></path><path d="M17.5 3.5L20 6"></path><path d="M9 2h6"></path></svg>
+    </div>
+    <div class="snooze-timer" id="snoozeTimer">5:00</div>
+    <div class="snooze-label">Until next ring</div>
+    <button class="snooze-cancel" id="cancelSnoozeBtn" type="button">Cancel Snooze</button>
+  </div>
+</div>
+
+<div class="overlay" id="shareOverlay">
+  <div class="share-overlay-content">
+    <div class="share-overlay-topbar">
+      <button class="share-overlay-close" type="button" aria-label="Close share" onclick="closeShareOverlay()">
+        <svg class="share-overlay-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <path d="M6 6L18 18"></path>
+          <path d="M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="share-overlay-preview">
+      <div class="share-card-preview-shell">
+        <div class="share-card share-card-preview" id="sharePreviewCard">
+          <img class="share-card-bg-image" alt="" crossorigin="anonymous">
+          <div class="share-card-wash"></div>
+
+          <div class="share-card-main">
+            <img class="share-card-cover" alt="Album Cover" crossorigin="anonymous">
+            <div class="share-card-song">Wanting and Waiting</div>
+            <div class="share-card-artist">Occasionally Humans</div>
+          </div>
+
+          <div class="share-card-footer">
+            <div class="share-card-date">
+              <div class="share-card-month">Mar</div>
+              <div class="share-card-day">23</div>
+            </div>
+            <div class="share-card-brand">Vibrise</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="share-overlay-actions">
+      <button class="share-action-btn" type="button" onclick="saveShareImage()">
+        <svg class="share-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+          <circle cx="8.5" cy="10" r="1.5"></circle>
+          <path d="M21 15l-4.5-4.5L7 20"></path>
+        </svg>
+        <span>Save image</span>
+      </button>
+      <button class="share-action-btn" type="button" onclick="shareCurrentSong()">
+        <svg class="share-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4"></path>
+          <path d="M8 8l4-4 4 4"></path>
+          <path d="M5 14v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"></path>
+        </svg>
+        <span>Share</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="thanks-overlay" id="thanksOverlay" style="display:none;" aria-hidden="true">
+  <div class="thanks-message">
+    <span>Thank</span>
+    <span>You</span>
+  </div>
+</div>
+
+<!-- ====== SHARE CARD RENDER ====== -->
+<div class="share-card-render-surface" aria-hidden="true">
+  <div class="share-card" id="shareCard">
+    <img class="share-card-bg-image" id="shareCardBg" alt="" crossorigin="anonymous">
+    <div class="share-card-wash"></div>
+
+    <div class="share-card-main">
+      <img class="share-card-cover" id="shareCardCover" alt="Album Cover" crossorigin="anonymous">
+      <div class="share-card-song" id="shareCardSong">Wanting and Waiting</div>
+      <div class="share-card-artist" id="shareCardArtist">Occasionally Humans</div>
+    </div>
+
+    <div class="share-card-footer">
+      <div class="share-card-date">
+        <div class="share-card-month" id="shareCardMonth">Mar</div>
+        <div class="share-card-day" id="shareCardDay">23</div>
+      </div>
+      <div class="share-card-brand">Vibrise</div>
+    </div>
+  </div>
+</div>
+
+<audio id="audioPlayer" loop></audio>
+
+</div><!-- .phone-frame -->
+
+<!-- JS: load order matters (store -> domain -> services -> app -> alarm -> ui) -->
+<script src="js/store/state.js"></script>
+<script src="js/domain/favorites.js"></script>
+<script src="js/store/favorites-store.js"></script>
+<script src="js/domain/music-selection.js"></script>
+<script src="js/domain/alarm.js"></script>
+<script src="js/services/storage.js"></script>
+<script src="js/services/audio.js"></script>
+<script src="js/services/weather.js"></script>
+<script src="js/app.js"></script>
+<script src="js/services/music-source.js"></script>
+<script src="js/alarm/alarm-setting.js"></script>
+<script src="js/alarm/alarm-actions.js"></script>
+<script src="js/alarm/alarm-ring-store.js"></script>
+<script src="js/alarm/ring-dependencies.js"></script>
+<script src="js/alarm/alarm-engine.js"></script>
+<script src="js/alarm/alarm-trigger-adapter.js"></script>
+<script src="js/alarm/alarm-scheduler.js"></script>
+<script src="js/alarm/ring-presenter.js"></script>
+<script src="js/alarm/ring-session.js"></script>
+<script src="js/alarm.js"></script>
+<script src="js/alarm/ring-controller.js"></script>
+<script src="js/ui/layer-coordinator.js"></script>
+<script src="js/ui/navigation.js"></script>
+<script src="js/ui/backgrounds.js"></script>
+<script src="js/ui/home-presenter.js"></script>
+<script src="js/ui/home.js"></script>
+<script src="js/ui/favorites-presenter.js"></script>
+<script src="js/ui/favorites.js"></script>
+<script src="js/ui/overlays.js"></script>
+<script src="js/ui/share-state.js"></script>
+<script src="js/ui/share-renderer.js"></script>
+<script src="js/ui/share.js"></script>
+<script src="js/ui/thanks.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
